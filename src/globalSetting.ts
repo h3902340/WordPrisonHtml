@@ -1,0 +1,9 @@
+export const noun_color = "#FC9B45";
+export const verb_color = "#51A6FF";
+export const dialogue_color = "#FFFFFF";
+export const inventory_background_color = "#BEBEBE";
+export const card_width_unit = 50;
+export const card_height = 50;
+export const dialogue_font_size = 30;
+export const type_interval = 40;
+export const dialogue_width = 20;
