@@ -1,6 +1,6 @@
 import { card_height, card_width_unit, inventory_background_color } from "./GlobalSetting";
-import { Card, Rect } from "./TypeDefinition";
-import { drawCardFromTopLeft, drawFilledRect } from "./Util";
+import { Card, CardValue, Rect } from "./TypeDefinition";
+import { clearRect, drawCardFromTopLeft, drawFilledRect } from "./Utility";
 
 export class Inventory {
     public cardArray: Card[] = [];
@@ -15,16 +15,16 @@ export class Inventory {
     };
 
     public drawInventory(): void {
+        clearRect(this.rect);
         drawFilledRect(this.rect, inventory_background_color)
-
         for (let i = 0; i < this.cardArray.length; i++) {
             if (this.cardArray[i].isSelected) continue;
             drawCardFromTopLeft(this.cardArray[i]);
         }
     }
 
-    public addCard(word: string, isVerb: boolean): void {
-        let cardWidth = card_width_unit * word.length;
+    public addCard(cardInfo: CardValue): void {
+        let cardWidth = card_width_unit * cardInfo.Word.length;
         let nextTailX = this.inventoryTailX + 10 + cardWidth;
         if (nextTailX > 600) {
             this.inventoryTailY += 10 + card_height;
@@ -38,8 +38,8 @@ export class Inventory {
             },
             inventoryX: this.inventoryTailX,
             inventoryY: this.inventoryTailY,
-            word: word,
-            isVerb: isVerb,
+            word: cardInfo.Word,
+            partOfSpeech: cardInfo.PartOfSpeech,
             isSelected: false
         });
         this.inventoryTailX = this.inventoryTailX + cardWidth + 10;

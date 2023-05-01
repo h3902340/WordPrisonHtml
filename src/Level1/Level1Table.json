@@ -1,0 +1,70 @@
+{
+    "CardTable": [
+        {
+            "ID": 0,
+            "Word": "我",
+            "PartOfSpeech": "名"
+        },
+        {
+            "ID": 1,
+            "Word": "檢視",
+            "PartOfSpeech": "動"
+        },
+        {
+            "ID": 2,
+            "Word": "密室",
+            "PartOfSpeech": "名"
+        },
+        {
+            "ID": 3,
+            "Word": "桌子",
+            "PartOfSpeech": "名"
+        },
+        {
+            "ID": 4,
+            "Word": "門",
+            "PartOfSpeech": "名"
+        },
+        {
+            "ID": 5,
+            "Word": "移至",
+            "PartOfSpeech": "動"
+        },
+        {
+            "ID": 6,
+            "Word": "開",
+            "PartOfSpeech": "動"
+        }
+    ],
+    "SentenceTable": [
+        {
+            "CardID1": 0,
+            "CardID2": 1,
+            "CardID3": 2,
+            "Status": "第一次造句",
+            "NewCardID": "[3,4]",
+            "DialogueID": 1
+        },
+        {
+            "CardID1": 0,
+            "CardID2": 1,
+            "CardID3": 2,
+            "Status": "非第一次造句",
+            "DialogueID": 2
+        }
+    ],
+    "DialogueTable": [
+        {
+            "ID": 0,
+            "Dialogue": "這裡是哪裡？「我」醒了過來。發現在自己被困在一間「密室」。我摸著自己的口袋，沒有找到手機，無法對外聯繫。但發現一張詞卡「檢視」。這是做什麼用的？（獲得「密室」、「我」、「檢視」）"
+        },
+        {
+            "ID": 1,
+            "Dialogue": "我檢視這密室。看見密室內有一扇「門」與一張「桌子」。沒有別的東西了。"
+        },
+        {
+            "ID": 2,
+            "Dialogue": "我已經檢視過這密室。密室內除了一扇門與一張桌子外，沒有其他特別的東西了。"
+        }
+    ]
+}

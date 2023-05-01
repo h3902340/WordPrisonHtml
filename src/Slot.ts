@@ -1,21 +1,22 @@
 import { verb_color, noun_color } from "./GlobalSetting";
-import { Card, Rect } from "./TypeDefinition";
-import {drawCardFromCenter, drawHollowRect} from "./Util";
+import { Card, Rect, verb } from "./TypeDefinition";
+import {clearRect, drawCardFromCenter, drawHollowRect} from "./Utility";
 
 export class Slot{
     public rect: Rect;
-    public isVerb: boolean;
+    public partOfSpeech: string;
     public card: Card;
     private readonly lineWidth = 6;
 
-    constructor(rect: Rect, isVerb: boolean, card: Card){
+    constructor(rect: Rect, partOfSpeech: string, card: Card){
         this.rect = rect;
-        this.isVerb = isVerb;
+        this.partOfSpeech = partOfSpeech;
         this.card = card;
     }
 
     public drawSlot(): void {
-        if (this.isVerb) {
+        clearRect(this.rect);
+        if (this.partOfSpeech == verb) {
             drawHollowRect(this.rect, verb_color, this.lineWidth);
         } else {
             drawHollowRect(this.rect, noun_color, this.lineWidth);

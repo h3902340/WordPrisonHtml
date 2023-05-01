@@ -1,20 +1,17 @@
-import { card_height, card_width_unit, dialogue_color, dialogue_font_size, dialogue_width, noun_color, type_interval, verb_color } from "./GlobalSetting";
-import { Card, Position, Rect } from "./TypeDefinition";
-
-export let canvas: HTMLCanvasElement = document.getElementById("mainCanvas") as HTMLCanvasElement;
-let ctx: CanvasRenderingContext2D = canvas.getContext("2d");
-ctx.font = `${dialogue_font_size}px Arial`;
+import { card_height, card_width_unit, dialogue_color, dialogue_font, dialogue_font_size, dialogue_width, noun_color, type_interval, verb_color } from "./GlobalSetting";
+import { Card, Position, Rect, verb } from "./TypeDefinition";
+import { ctx } from "./index";
 
 export async function sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export function clearCanvas(clearArea: { startPos: Position, endPos: Position }): void {
-    ctx.clearRect(clearArea.startPos.x, clearArea.startPos.y, clearArea.endPos.x, clearArea.endPos.y);
+export function clearRect(rect: Rect): void {
+    ctx.clearRect(rect.x, rect.y, rect.w, rect.h);
 }
 
 export function drawCardFromTopLeft(card: Card): void {
-    if (card.isVerb) {
+    if (card.partOfSpeech == verb) {
         ctx.fillStyle = verb_color;
     } else {
         ctx.fillStyle = noun_color;
@@ -26,7 +23,7 @@ export function drawCardFromTopLeft(card: Card): void {
 }
 
 export function drawCardFromCenter(card: Card, centerX: number, centerY: number): void {
-    if (card.isVerb) {
+    if (card.partOfSpeech == verb) {
         ctx.fillStyle = verb_color;
     } else {
         ctx.fillStyle = noun_color;
@@ -63,6 +60,7 @@ export function splitString(str: string, N: number): string[] {
 }
 
 export async function say(text: string): Promise<void> {
+    ctx.font = dialogue_font;
     let textSplit = splitString(text, dialogue_width);
     for (let i = 0; i < textSplit.length; i++) {
         let currentText = textSplit[i];
