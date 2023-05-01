@@ -1,5 +1,5 @@
-import { card_height, card_width_unit, dialogue_color, dialogue_font_size, dialogue_width, noun_color, type_interval, verb_color } from "./globalSetting";
-import { Card, Position, Rect, Slot } from "./typeDefinition";
+import { card_height, card_width_unit, dialogue_color, dialogue_font_size, dialogue_width, noun_color, type_interval, verb_color } from "./GlobalSetting";
+import { Card, Position, Rect } from "./TypeDefinition";
 
 export let canvas: HTMLCanvasElement = document.getElementById("mainCanvas") as HTMLCanvasElement;
 let ctx: CanvasRenderingContext2D = canvas.getContext("2d");
@@ -39,24 +39,17 @@ export function drawCardFromCenter(card: Card, centerX: number, centerY: number)
     ctx.fillText(card.word, x + (cardWidth - dialogue_font_size * card.word.length) * .5, y + 35);
 }
 
-export function drawSlot(slot: Slot): void {
-    ctx.beginPath();
-    ctx.rect(slot.rect.x, slot.rect.y, slot.rect.w, slot.rect.h);
-    ctx.lineWidth = 6;
-    if (slot.isVerb) {
-        ctx.strokeStyle = verb_color;
-    } else {
-        ctx.strokeStyle = noun_color;
-    }
-    ctx.stroke();
-    if (slot.card) {
-        drawCardFromCenter(slot.card, slot.rect.x + slot.rect.w * .5, slot.rect.y + slot.rect.h * .5);
-    }
-}
-
-export function drawRect(rect: Rect, color: string): void {
+export function drawFilledRect(rect: Rect, color: string): void {
     ctx.fillStyle = color;
     ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+}
+
+export function drawHollowRect(rect: Rect, color: string, lineWidth: number): void {
+    ctx.beginPath();
+    ctx.rect(rect.x, rect.y, rect.w, rect.h);
+    ctx.lineWidth = lineWidth;
+    ctx.strokeStyle = color;
+    ctx.stroke();
 }
 
 export function splitString(str: string, N: number): string[] {

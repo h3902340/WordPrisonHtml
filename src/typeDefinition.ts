@@ -2,12 +2,6 @@ export interface ILevel {
     Begin(): void;
 }
 
-export type Slot = {
-    rect: Rect;
-    isVerb: boolean;
-    card: Card | null;
-}
-
 export type Card = {
     rect: Rect;
     inventoryX: number;

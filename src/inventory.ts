@@ -1,6 +1,6 @@
-import { card_height, card_width_unit, inventory_background_color } from "./globalSetting";
-import { Card, Rect } from "./typeDefinition";
-import { drawCardFromTopLeft, drawRect } from "./util";
+import { card_height, card_width_unit, inventory_background_color } from "./GlobalSetting";
+import { Card, Rect } from "./TypeDefinition";
+import { drawCardFromTopLeft, drawFilledRect } from "./Util";
 
 export class Inventory {
     public cardArray: Card[] = [];
@@ -15,7 +15,7 @@ export class Inventory {
     };
 
     public drawInventory(): void {
-        drawRect(this.rect, inventory_background_color)
+        drawFilledRect(this.rect, inventory_background_color)
 
         for (let i = 0; i < this.cardArray.length; i++) {
             if (this.cardArray[i].isSelected) continue;

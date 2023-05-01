@@ -1,46 +1,25 @@
-import { Inventory } from "./inventory";
-import { ILevel, Position, Slot } from "./typeDefinition";
-import { say, drawSlot, clearCanvas, canvas, getMousePos, isInside } from "./util";
+import { Inventory } from "./Inventory";
+import { ILevel, Position } from "./TypeDefinition";
+import { say, clearCanvas, canvas, getMousePos, isInside } from "./Util";
+import { Slot } from "./Slot";
 
 export class Level1 implements ILevel {
     private inventory: Inventory;
-    private slotArray: Slot[] = [{
-        rect: {
-            x: 145,
-            y: 270,
-            w: 150,
-            h: 50,
-        }, isVerb: false,
-        card: null
-    },
-    {
-        rect: {
-            x: 325,
-            y: 270,
-            w: 150,
-            h: 50
-        },
-        isVerb: true,
-        card: null
-    }, {
-        rect: {
-            x: 505,
-            y: 270,
-            w: 150,
-            h: 50
-        },
-        isVerb: false,
-        card: null
-    }];
+    private slotArray: Slot[];
     constructor() {
         this.inventory = new Inventory();
+        this.slotArray = [
+            new Slot({ x: 145, y: 270, w: 150, h: 50, }, false, null),
+            new Slot({ x: 325, y: 270, w: 150, h: 50 }, true, null),
+            new Slot({ x: 505, y: 270, w: 150, h: 50 }, false, null)
+        ]
     }
 
     public Begin(): void {
         this.entrySequence();
     }
 
-    private async entrySequence(): Promise<void>{
+    private async entrySequence(): Promise<void> {
         this.drawLevel();
         await say("這裡是哪裡？「我」醒了過來。發現在自己被困在一間「密室」。我摸著自己的口袋，沒有找到手機，無法對外聯繫。但發現一張詞卡「檢視」。這是做什麼用的？（獲得「密室」、「我」、「檢視」）");
         this.inventory.addCard("密室", false);
@@ -90,17 +69,11 @@ export class Level1 implements ILevel {
 
     private drawLevel(): void {
         clearCanvas({
-            startPos: {
-                x: 0,
-                y: 270
-            },
-            endPos: {
-                x: canvas.width,
-                y: canvas.height
-            }
+            startPos: { x: 0, y: 270 },
+            endPos: { x: canvas.width, y: canvas.height }
         });
         for (let i = 0; i < this.slotArray.length; i++) {
-            drawSlot(this.slotArray[i]);
+            this.slotArray[i].drawSlot();
         }
         this.inventory.drawInventory();
     }
