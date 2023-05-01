@@ -1,6 +1,5 @@
 export interface ILevel {
-    drawLevel(): void;
-    checkCardClick(evt: MouseEvent): void;
+    Begin(): void;
 }
 
 export type Slot = {

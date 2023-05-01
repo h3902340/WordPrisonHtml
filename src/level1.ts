@@ -34,16 +34,23 @@ export class Level1 implements ILevel {
     }];
     constructor() {
         this.inventory = new Inventory();
+    }
+
+    public Begin(): void {
+        this.entrySequence();
+    }
+
+    private async entrySequence(): Promise<void>{
+        this.drawLevel();
+        await say("這裡是哪裡？「我」醒了過來。發現在自己被困在一間「密室」。我摸著自己的口袋，沒有找到手機，無法對外聯繫。但發現一張詞卡「檢視」。這是做什麼用的？（獲得「密室」、「我」、「檢視」）");
         this.inventory.addCard("密室", false);
         this.inventory.addCard("我", false);
         this.inventory.addCard("檢視", true);
-
         canvas.addEventListener('click', this.checkCardClick.bind(this));
-
-        say("這裡是哪裡？「我」醒了過來。發現在自己被困在一間「密室」。我摸著自己的口袋，沒有找到手機，無法對外聯繫。但發現一張詞卡「檢視」。這是做什麼用的？（獲得「密室」、「我」、「檢視」）");
+        this.drawLevel();
     }
 
-    public checkCardClick(evt: MouseEvent): void {
+    private checkCardClick(evt: MouseEvent): void {
         let mousePos: Position = getMousePos(canvas, evt);
         this.inventory.cardArray.forEach(card => {
             if (!isInside(mousePos, card.rect)) return;
@@ -81,7 +88,7 @@ export class Level1 implements ILevel {
         });
     }
 
-    public drawLevel(): void {
+    private drawLevel(): void {
         clearCanvas({
             startPos: {
                 x: 0,
