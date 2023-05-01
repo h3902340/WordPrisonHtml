@@ -1,15 +1,3 @@
-# 🚀 Welcome to your new awesome project!
+# 文字脫出網頁版
 
-This project has been created using **webpack-cli**, you can now run
-
-```
-npm run build
-```
-
-or
-
-```
-yarn build
-```
-
-to bundle your application
+這是文字脫出原作者寫的網頁版文字脫出。網站入口是index.html。
