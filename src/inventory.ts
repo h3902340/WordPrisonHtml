@@ -1,5 +1,5 @@
 import { card_height, card_width_unit, inventory_background_color } from "./GlobalSetting";
-import { Card, CardValue, Rect } from "./TypeDefinition";
+import { Card, CardDef, Rect } from "./TypeDefinition";
 import { clearRect, drawCardFromTopLeft, drawFilledRect } from "./Utility";
 
 export class Inventory {
@@ -23,7 +23,7 @@ export class Inventory {
         }
     }
 
-    public addCard(cardInfo: CardValue): void {
+    public addCard(cardInfo: CardDef): void {
         let cardWidth = card_width_unit * cardInfo.Word.length;
         let nextTailX = this.inventoryTailX + 10 + cardWidth;
         if (nextTailX > 600) {
@@ -38,8 +38,7 @@ export class Inventory {
             },
             inventoryX: this.inventoryTailX,
             inventoryY: this.inventoryTailY,
-            word: cardInfo.Word,
-            partOfSpeech: cardInfo.PartOfSpeech,
+            cardInfo: cardInfo,
             isSelected: false
         });
         this.inventoryTailX = this.inventoryTailX + cardWidth + 10;

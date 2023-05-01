@@ -1,15 +1,20 @@
 import { Inventory } from "../Inventory";
-import { CardValue, ILevel, LevelTable, Position, SentenceKey, SentenceValue, noun, verb } from "../TypeDefinition";
-import { say, isInside } from "../Utility";
+import { TypeWriter } from "../TypeWriter";
+import { CardDef, DialogueDef, ILevel, Position, SentenceDef, noun, verb } from "../TypeDefinition";
+import { isInside } from "../Utility";
 import { Slot } from "../Slot";
-import levelTableJson from './Level1Table.json';
+import cardTableJson from './CardTable.json';
+import dialogueTableJson from './DialogueTable.json';
+import sentenceTableJson from './SentenceTable.json';
 
 export class Level1 implements ILevel {
-    private inventory: Inventory;
-    private slotArray: Slot[];
-    private readonly cardTable = new Map<number, CardValue>();
-    private readonly sentenceTable = new Map<SentenceKey, SentenceValue>();
+    private readonly inventory: Inventory;
+    private readonly slotArray: Slot[];
+    private readonly typeWriter: TypeWriter;
+    private readonly cardTable = new Map<number, CardDef>();
+    private readonly sentenceTable: SentenceDef[];
     private readonly dialogueTable = new Map<number, string>();
+    private levelState: Level1State;
 
     constructor() {
         this.inventory = new Inventory();
@@ -18,30 +23,34 @@ export class Level1 implements ILevel {
             new Slot({ x: 325, y: 270, w: 150, h: 50 }, verb, null),
             new Slot({ x: 505, y: 270, w: 150, h: 50 }, noun, null)
         ];
-        let levelTableRaw: LevelTable = levelTableJson as LevelTable;
+        this.typeWriter = new TypeWriter({ x: 100, y: 70, w: 600, h: 190 });
 
-        levelTableRaw.CardTable.forEach(card => {
-            this.cardTable.set(card.ID, {
-                Word: card.Word,
-                PartOfSpeech: card.PartOfSpeech
-            });
+        let cardTableRaw: CardDef[] = cardTableJson as CardDef[];
+
+        cardTableRaw.forEach(card => {
+            this.cardTable.set(card.ID, card);
         });
-        levelTableRaw.SentenceTable.forEach(sentence => {
-            this.sentenceTable.set({
-                CardID1: sentence.CardID1,
-                CardID2: sentence.CardID2,
-                CardID3: sentence.CardID3,
-                Status: sentence.Status,
-            }, {
-                NewCardID: sentence.NewCardID,
-                DialogueID: sentence.DialogueID
-            });
-        });
-        levelTableRaw.DialogueTable.forEach(dialogue => {
+
+        this.sentenceTable = sentenceTableJson as SentenceDef[];
+
+        let dialogueTableRaw: DialogueDef[] = dialogueTableJson as DialogueDef[];
+        dialogueTableRaw.forEach(dialogue => {
             this.dialogueTable.set(dialogue.ID, dialogue.Dialogue);
         });
 
-        console.log("Hello!" + new Error().stack);
+        this.levelState = {
+            alreadyInspectRoom: false,
+            alreadyInspectDoor: false,
+            alreadyInspectTable: false,
+            alreadyGotOpen: false,
+            alreadyOpenDoor: false,
+            alreadyOpenTable: false,
+            alreadyOpenCornerCeiling: false,
+            alreadyOpenDoorCeiling: false,
+            alreadyEnterCeiling: false,
+            tablePosition: TablePosition.Room,
+            mePosition: MePosition.Room
+        };
     }
 
     public begin(): void {
@@ -49,55 +58,95 @@ export class Level1 implements ILevel {
     }
 
     private async entrySequence(): Promise<void> {
-        this.drawLevel();
-        await say(this.dialogueTable.get(0));
+        for (let i = 0; i < this.slotArray.length; i++) {
+            this.slotArray[i].drawSlot();
+        }
+        this.inventory.drawInventory();
+        await this.typeWriter.say(this.dialogueTable.get(0));
         this.inventory.addCard(this.cardTable.get(2));
         this.inventory.addCard(this.cardTable.get(0));
         this.inventory.addCard(this.cardTable.get(1));
-        this.drawLevel();
+        this.inventory.drawInventory();
     }
 
     public onCanvasClick(mousePos: Position): void {
         this.inventory.cardArray.forEach(card => {
             if (!isInside(mousePos, card.rect)) return;
-            let needToRedrawLevel = false;
             if (card.isSelected) {
                 card.rect.x = card.inventoryX;
                 card.rect.y = card.inventoryY;
                 card.isSelected = false;
                 for (let i = 0; i < this.slotArray.length; i++) {
-                    if (this.slotArray[i].card == card) {
-                        this.slotArray[i].card = null;
+                    if (this.slotArray[i].IsCardEqual(card)) {
+                        this.slotArray[i].RemoveCard();
+                        this.slotArray[i].drawSlot();
+                        this.inventory.drawInventory();
                         break;
                     }
                 }
-                needToRedrawLevel = true;
             } else {
                 for (let i = 0; i < this.slotArray.length; i++) {
                     let slot = this.slotArray[i];
-                    if (slot.partOfSpeech == card.partOfSpeech) {
-                        if (!slot.card) {
-                            slot.card = card;
-                            card.isSelected = true;
-                            card.rect.x = slot.rect.x + (slot.rect.w - card.rect.w) * .5;
-                            card.rect.y = slot.rect.y;
-                            needToRedrawLevel = true;
+                    if (slot.partOfSpeech == card.cardInfo.PartOfSpeech) {
+                        if (slot.IsCardEqual(null)) {
+                            slot.InsertCard(card);
+                            slot.drawSlot();
+                            this.inventory.drawInventory();
                             break;
                         }
                     }
                 }
             }
 
-            if (needToRedrawLevel) {
-                this.drawLevel();
+            for (let i = 0; i < this.sentenceTable.length; i++) {
+                let sentence: SentenceDef = this.sentenceTable[i];
+                // 我檢視密室
+                if (sentence.CardID1 == this.slotArray[0].GetCardID() &&
+                    sentence.CardID2 == this.slotArray[1].GetCardID() &&
+                    sentence.CardID3 == this.slotArray[2].GetCardID()) {
+                    // 在boolean前面加一個「+」可以將boolean轉成number
+                    if (sentence.StatusID == +this.levelState.alreadyInspectRoom) {
+                        this.SayDialogue(sentence);
+                        this.levelState.alreadyInspectRoom = true;
+                        break;
+                    }
+                }
             }
         });
     }
 
-    private drawLevel(): void {
-        for (let i = 0; i < this.slotArray.length; i++) {
-            this.slotArray[i].drawSlot();
+    private async SayDialogue(sentenceInfo: SentenceDef): Promise<void> {
+        await this.typeWriter.say(this.dialogueTable.get(sentenceInfo.DialogueID));
+        if (sentenceInfo.NewCardID) {
+            for (let i = 0; i < sentenceInfo.NewCardID.length; i++) {
+                this.inventory.addCard(this.cardTable.get(sentenceInfo.NewCardID[i]));
+            }
+            this.inventory.drawInventory();
         }
-        this.inventory.drawInventory();
     }
+}
+
+type Level1State = {
+    alreadyInspectRoom: boolean;
+    alreadyInspectDoor: boolean;
+    alreadyInspectTable: boolean;
+    alreadyGotOpen: boolean;
+    alreadyOpenDoor: boolean;
+    alreadyOpenTable: boolean;
+    alreadyOpenCornerCeiling: boolean;
+    alreadyOpenDoorCeiling: boolean;
+    alreadyEnterCeiling: boolean;
+    tablePosition: TablePosition;
+    mePosition: MePosition;
+}
+
+enum TablePosition {
+    Room,
+    Door,
+    Corner,
+}
+
+enum MePosition {
+    Room,
+    OnTable
 }

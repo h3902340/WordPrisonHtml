@@ -7,7 +7,8 @@
   },
   "dependencies": {
     "ts-loader": "^9.4.2",
-    "webpack": "^5.81.0"
+    "webpack": "^5.81.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "webpack-cli": "^5.0.2"

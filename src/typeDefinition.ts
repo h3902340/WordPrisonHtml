@@ -3,27 +3,10 @@ export interface ILevel {
     onCanvasClick(mousePos: Position): void;
 }
 
-export type LevelTable = {
-    CardTable: CardDef[];
-    SentenceTable: SentenceDef[];
-    DialogueTable: DialogueDef[];
-}
-
-export type CardValue = {
-    Word: string;
-    PartOfSpeech: string;
-}
-
 export type SentenceKey = {
     CardID1: number;
     CardID2: number;
     CardID3: number;
-    Status: string;
-}
-
-export type SentenceValue = {
-    NewCardID: number[];
-    DialogueID: number;
 }
 
 export const noun: string = "名";
@@ -39,7 +22,7 @@ export type SentenceDef = {
     CardID1: number;
     CardID2: number;
     CardID3: number;
-    Status: string;
+    StatusID: number;
     NewCardID: number[];
     DialogueID: number;
 }
@@ -53,8 +36,7 @@ export type Card = {
     rect: Rect;
     inventoryX: number;
     inventoryY: number;
-    word: string;
-    partOfSpeech: string;
+    cardInfo: CardDef;
     isSelected: boolean;
 }
 
