@@ -18,3 +18,5 @@ export const dialogue_font = `${dialogue_font_size}px Arial`;
 export const type_interval = 20;
 // 對話框的寬度，單位是字數
 export const dialogue_width = 20;
+export const referenceScreenWidth: number = 800;
+export const referenceScreenHeight: number = 600;

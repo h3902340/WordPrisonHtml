@@ -1,0 +1,15 @@
+#wrapper {
+    display: flex;
+    justify-content: center;
+    /* center horizontally */
+    align-items: center;
+    /* center vertically */
+}
+
+#gameRuleFooter {
+    color: rgb(255, 255, 255);
+    display: table;
+    text-align: left;
+    margin-left: auto;
+    margin-right: auto;
+}

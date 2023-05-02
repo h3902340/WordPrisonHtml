@@ -1,11 +1,24 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="utf-8" />
-        <title>文字脫出網頁版</title>
-    </head>
-    <body style="background-color:rgb(0, 0, 0);">
-        <Canvas id="mainCanvas" width="800" height="600" style="border:1px solid #ffffff;"></Canvas>
-        <script src="dist/main.js"></script>
-    </body>
+
+<head>
+    <meta charset="utf-8" />
+    <title>文字脫出網頁版</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body style="background-color:rgb(0, 0, 0);">
+    <div id="wrapper">
+        <Canvas id="mainCanvas"></Canvas>
+    </div>
+    <script src="dist/main.js"></script>
+    <footer id="gameRuleFooter">
+        <p>遊戲規則：</p>
+        <p>1. 點擊詞卡以輸入字詞造句，遊戲內的角色就會有所行動，有時候還可能獲得新詞卡。</p>
+        <p>2. 造句格式為名詞＋動詞＋名詞。例如：我檢視密室。</p>
+        <p>3. 若欲造「我將鉛筆放入抽屜」，則可省略「我」，只輸入「鉛筆放入抽屜」。</p>
+        <p>此為文字獄原作者製作的網頁遊戲。此為測試版，目前沒有存檔功能。</p>
+    </footer>
+</body>
+
 </html>
