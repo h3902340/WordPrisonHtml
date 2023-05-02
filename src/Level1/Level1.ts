@@ -6,6 +6,7 @@ import { Slot } from "../Slot";
 import cardTableJson from './CardTable.json';
 import dialogueTableJson from './DialogueTable.json';
 import sentenceTableJson from './SentenceTable.json';
+import stateInitTableJson from './StateInitTable.json';
 
 export class Level1 implements ILevel {
     private readonly inventory: Inventory;
@@ -14,7 +15,7 @@ export class Level1 implements ILevel {
     private readonly cardTable = new Map<number, CardDef>();
     private readonly sentenceTable: SentenceDef[];
     private readonly dialogueTable = new Map<number, string>();
-    private levelState: { [k: string]: number };
+    private readonly stateInitTable: { [k: string]: any }[];
 
     constructor() {
         this.inventory = new Inventory();
@@ -38,11 +39,12 @@ export class Level1 implements ILevel {
             this.dialogueTable.set(dialogue.ID, dialogue.Dialogue);
         });
 
-        this.levelState = {
-            MeInspectRoom: 0,
-            MeInspectDoor: 0,
-            MoveToGot: 0,
-        };
+        this.stateInitTable = stateInitTableJson as { [k: string]: any }[];
+
+        for (let i = 0; i < this.stateInitTable.length; i++) {
+            new Function(this.stateInitTable[i]["StateName"] + "=" +
+                this.stateInitTable[i]["StateInit"])();
+        }
     }
 
     public begin(): void {
@@ -99,23 +101,13 @@ export class Level1 implements ILevel {
             for (let i = 0; i < this.sentenceTable.length; i++) {
                 let sentence: SentenceDef = this.sentenceTable[i];
                 if (!this.isSentenceMatch(sentence)) continue;
-                let isConditionMet: boolean = true;
-                for (let stateKey in sentence.Condition) {
-                    if (this.levelState[stateKey] != sentence.Condition[stateKey]) {
-                        isConditionMet = false;
-                        break;
-                    }
+                if (!this.runLogicalExpression(sentence.Condition)) continue;
+
+                this.SayDialogue(sentence);
+                if (sentence.Consequence) {
+                    Function(`"use strict";${sentence.Consequence}`)();
                 }
-    
-                if (isConditionMet) {
-                    this.SayDialogue(sentence);
-                    if (sentence.Consequence) {
-                        for (let stateKey in sentence.Consequence) {
-                            this.levelState[stateKey] = sentence.Consequence[stateKey];
-                        }
-                    }
-                    break;
-                }
+                break;
             }
         });
     }
@@ -140,5 +132,9 @@ export class Level1 implements ILevel {
             }
             this.inventory.drawInventory();
         }
+    }
+
+    private runLogicalExpression(str: string): boolean {
+        return new Function("return " + str)();
     }
 }

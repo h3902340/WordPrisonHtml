@@ -1,0 +1,1 @@
+[{"StateName":"MeInspectRoom","StateInit":false},{"StateName":"MeInspectTable","StateInit":false},{"StateName":"MoveToGot","StateInit":false},{"StateName":"MeInspectDoor","StateInit":false},{"StateName":"TablePosition","StateInit":"null"},{"StateName":"BoxPosition","StateInit":"null"},{"StateName":"OpenGot","StateInit":false},{"StateName":"AskGot","StateInit":false}]

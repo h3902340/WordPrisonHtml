@@ -22,10 +22,10 @@ export type SentenceDef = {
     CardID1: number;
     CardID2: number;
     CardID3: number;
-    Condition: { [k: string]: number };
+    Condition: string;
     NewCardID: number[];
     DialogueID: number;
-    Consequence: { [k: string]: number };
+    Consequence: string;
 }
 
 export type DialogueDef = {

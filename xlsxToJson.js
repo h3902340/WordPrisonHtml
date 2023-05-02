@@ -7,6 +7,7 @@ workbook.SheetNames.forEach(function (sheet_name) {
     var data = [];
     for (z in worksheet) {
         if (z[0] === '!') continue;
+        if (z == "StateTable") continue;
         //parse out the column, row, and value
         var tt = 0;
         for (var i = 0; i < z.length; i++) {
@@ -26,7 +27,7 @@ workbook.SheetNames.forEach(function (sheet_name) {
         }
 
         if (!data[row]) data[row] = {};
-        if (headers[col] == "NewCardID" || headers[col] == "Condition" || headers[col] == "Consequence") {
+        if (headers[col] == "NewCardID") {
             data[row][headers[col]] = JSON.parse(value);
         } else if (headers[col] == "Comment") {
             // omit comment
