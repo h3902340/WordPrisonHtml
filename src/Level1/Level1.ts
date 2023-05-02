@@ -23,10 +23,10 @@ export class Level1 implements ILevel {
     private isMusicPlay: boolean = false;
     private musicAudio = new Audio('audio/Depth in Ruins.wav');
     private keybaordAudio = new Audio('audio/keyboard3.wav');
-    private pickupCardAudio = new Audio('audio/pick up.wav');
-    private putBackCardAudio = new Audio('audio/put back.wav');
     private goodEndingAudio = new Audio('audio/applause.wav');
     private badEndingAudio = new Audio('audio/ending_bass.wav');
+    private pickupAudioArray: any[];
+    private putbackAudioArray: any[];
 
     constructor() {
         this.inventory = new Inventory();
@@ -57,6 +57,18 @@ export class Level1 implements ILevel {
             new Function(this.stateInitTable[i]["StateName"] + "=" +
                 this.stateInitTable[i]["StateInit"])();
         }
+
+        this.pickupAudioArray = [
+            new Audio('audio/pick up.wav'),
+            new Audio('audio/pick up.wav'),
+            new Audio('audio/pick up.wav')
+        ];
+
+        this.putbackAudioArray = [
+            new Audio('audio/put back.wav'),
+            new Audio('audio/put back.wav'),
+            new Audio('audio/put back.wav')
+        ];
 
         this.musicAudio.loop = true;
         this.keybaordAudio.loop = true;
@@ -102,7 +114,7 @@ export class Level1 implements ILevel {
                         this.slotArray[i].RemoveCard();
                         this.slotArray[i].drawSlot();
                         this.inventory.drawInventory();
-                        this.pickupCardAudio.play();
+                        this.pickupAudioArray[i].play();
                         break;
                     }
                 }
@@ -120,7 +132,7 @@ export class Level1 implements ILevel {
                         slot.InsertCard(card);
                         slot.drawSlot();
                         this.inventory.drawInventory();
-                        this.putBackCardAudio.play();
+                        this.putbackAudioArray[i].play();
                         break;
                     }
                 }
