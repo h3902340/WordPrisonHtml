@@ -22,11 +22,11 @@ export class Level1 implements ILevel {
     private isTheEnd: boolean = false;
     private isMusicPlay: boolean = false;
     private musicAudio = new Audio('audio/Depth in Ruins.wav');
-    private keybaordAudio = new Audio('audio/keyboard3.ogg');
-    private pickupCardAudio = new Audio('audio/pick up.ogg');
-    private putBackCardAudio = new Audio('audio/put back.ogg');
+    private keybaordAudio = new Audio('audio/keyboard3.wav');
+    private pickupCardAudio = new Audio('audio/pick up.wav');
+    private putBackCardAudio = new Audio('audio/put back.wav');
     private goodEndingAudio = new Audio('audio/applause.wav');
-    private badEndingAudio = new Audio('audio/ending_bass.ogg');
+    private badEndingAudio = new Audio('audio/ending_bass.wav');
 
     constructor() {
         this.inventory = new Inventory();
