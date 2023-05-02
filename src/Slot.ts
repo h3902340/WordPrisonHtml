@@ -45,4 +45,8 @@ export class Slot {
         if (!this.card) return -1;
         return this.card.cardInfo.ID;
     }
+
+    public HasCard(): boolean {
+        return this.card != null;
+    }
 }

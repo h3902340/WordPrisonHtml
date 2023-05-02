@@ -15,6 +15,6 @@ export const dialogue_font_size = 30;
 // 對話框的文字字體
 export const dialogue_font = `${dialogue_font_size}px Arial`;
 // 對話框的打字間隔，單位是ms
-export const type_interval = 40;
+export const type_interval = 20;
 // 對話框的寬度，單位是字數
 export const dialogue_width = 20;

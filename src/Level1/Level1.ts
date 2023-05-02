@@ -14,7 +14,7 @@ export class Level1 implements ILevel {
     private readonly cardTable = new Map<number, CardDef>();
     private readonly sentenceTable: SentenceDef[];
     private readonly dialogueTable = new Map<number, string>();
-    private levelState: Level1State;
+    private levelState: { [k: string]: number };
 
     constructor() {
         this.inventory = new Inventory();
@@ -39,17 +39,9 @@ export class Level1 implements ILevel {
         });
 
         this.levelState = {
-            alreadyInspectRoom: false,
-            alreadyInspectDoor: false,
-            alreadyInspectTable: false,
-            alreadyGotOpen: false,
-            alreadyOpenDoor: false,
-            alreadyOpenTable: false,
-            alreadyOpenCornerCeiling: false,
-            alreadyOpenDoorCeiling: false,
-            alreadyEnterCeiling: false,
-            tablePosition: TablePosition.Room,
-            mePosition: MePosition.Room
+            MeInspectRoom: 0,
+            MeInspectDoor: 0,
+            MoveToGot: 0,
         };
     }
 
@@ -72,6 +64,7 @@ export class Level1 implements ILevel {
     public onCanvasClick(mousePos: Position): void {
         this.inventory.cardArray.forEach(card => {
             if (!isInside(mousePos, card.rect)) return;
+            // 如果點選到的詞卡已經輸入，則把詞卡放回inventory。
             if (card.isSelected) {
                 card.rect.x = card.inventoryX;
                 card.rect.y = card.inventoryY;
@@ -84,35 +77,59 @@ export class Level1 implements ILevel {
                         break;
                     }
                 }
-            } else {
-                for (let i = 0; i < this.slotArray.length; i++) {
-                    let slot = this.slotArray[i];
-                    if (slot.partOfSpeech == card.cardInfo.PartOfSpeech) {
-                        if (slot.IsCardEqual(null)) {
-                            slot.InsertCard(card);
-                            slot.drawSlot();
-                            this.inventory.drawInventory();
-                            break;
-                        }
-                    }
-                }
+                return;
             }
 
-            for (let i = 0; i < this.sentenceTable.length; i++) {
-                let sentence: SentenceDef = this.sentenceTable[i];
-                // 我檢視密室
-                if (sentence.CardID1 == this.slotArray[0].GetCardID() &&
-                    sentence.CardID2 == this.slotArray[1].GetCardID() &&
-                    sentence.CardID3 == this.slotArray[2].GetCardID()) {
-                    // 在boolean前面加一個「+」可以將boolean轉成number
-                    if (sentence.StatusID == +this.levelState.alreadyInspectRoom) {
-                        this.SayDialogue(sentence);
-                        this.levelState.alreadyInspectRoom = true;
+            // 如果點選到的詞卡還沒有輸入，尋找一個空的slot輸入。
+            for (let i = 0; i < this.slotArray.length; i++) {
+                let slot = this.slotArray[i];
+                if (slot.partOfSpeech == card.cardInfo.PartOfSpeech) {
+                    if (slot.IsCardEqual(null)) {
+                        slot.InsertCard(card);
+                        slot.drawSlot();
+                        this.inventory.drawInventory();
                         break;
                     }
                 }
             }
+
+            if (!this.isSlotFull()) return;
+
+            // 如果三個輸入框都滿了。檢查造句。
+            for (let i = 0; i < this.sentenceTable.length; i++) {
+                let sentence: SentenceDef = this.sentenceTable[i];
+                if (!this.isSentenceMatch(sentence)) continue;
+                let isConditionMet: boolean = true;
+                for (let stateKey in sentence.Condition) {
+                    if (this.levelState[stateKey] != sentence.Condition[stateKey]) {
+                        isConditionMet = false;
+                        break;
+                    }
+                }
+    
+                if (isConditionMet) {
+                    this.SayDialogue(sentence);
+                    if (sentence.Consequence) {
+                        for (let stateKey in sentence.Consequence) {
+                            this.levelState[stateKey] = sentence.Consequence[stateKey];
+                        }
+                    }
+                    break;
+                }
+            }
         });
+    }
+
+    private isSlotFull(): boolean {
+        return this.slotArray[0].HasCard() &&
+            this.slotArray[1].HasCard() &&
+            this.slotArray[2].HasCard();
+    }
+
+    private isSentenceMatch(sentence: SentenceDef): boolean {
+        return sentence.CardID1 == this.slotArray[0].GetCardID() &&
+            sentence.CardID2 == this.slotArray[1].GetCardID() &&
+            sentence.CardID3 == this.slotArray[2].GetCardID()
     }
 
     private async SayDialogue(sentenceInfo: SentenceDef): Promise<void> {
@@ -124,29 +141,4 @@ export class Level1 implements ILevel {
             this.inventory.drawInventory();
         }
     }
-}
-
-type Level1State = {
-    alreadyInspectRoom: boolean;
-    alreadyInspectDoor: boolean;
-    alreadyInspectTable: boolean;
-    alreadyGotOpen: boolean;
-    alreadyOpenDoor: boolean;
-    alreadyOpenTable: boolean;
-    alreadyOpenCornerCeiling: boolean;
-    alreadyOpenDoorCeiling: boolean;
-    alreadyEnterCeiling: boolean;
-    tablePosition: TablePosition;
-    mePosition: MePosition;
-}
-
-enum TablePosition {
-    Room,
-    Door,
-    Corner,
-}
-
-enum MePosition {
-    Room,
-    OnTable
 }
