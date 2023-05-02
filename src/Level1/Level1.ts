@@ -20,6 +20,13 @@ export class Level1 implements ILevel {
     private readonly stateInitTable: { [k: string]: any }[];
     private isSaying: boolean = false;
     private isTheEnd: boolean = false;
+    private isMusicPlay: boolean = false;
+    private musicAudio = new Audio('audio/Depth in Ruins.wav');
+    private keybaordAudio = new Audio('audio/keyboard3.ogg');
+    private pickupCardAudio = new Audio('audio/pick up.ogg');
+    private putBackCardAudio = new Audio('audio/put back.ogg');
+    private goodEndingAudio = new Audio('audio/applause.wav');
+    private badEndingAudio = new Audio('audio/ending_bass.ogg');
 
     constructor() {
         this.inventory = new Inventory();
@@ -50,6 +57,9 @@ export class Level1 implements ILevel {
             new Function(this.stateInitTable[i]["StateName"] + "=" +
                 this.stateInitTable[i]["StateInit"])();
         }
+
+        this.musicAudio.loop = true;
+        this.keybaordAudio.loop = true;
     }
 
     public begin(): void {
@@ -73,6 +83,13 @@ export class Level1 implements ILevel {
         if (this.isTheEnd) return;
         // 說話時不接受點擊。
         if (this.isSaying) return;
+
+        // 檢查是否有播放BGM
+        if (!this.isMusicPlay) {
+            this.musicAudio.play();
+            this.isMusicPlay = true;
+        }
+
         this.inventory.cardArray.forEach(card => {
             if (!isInside(mousePos, card.rect)) return;
             // 如果點選到的詞卡已經輸入，則把詞卡放回inventory。
@@ -85,6 +102,7 @@ export class Level1 implements ILevel {
                         this.slotArray[i].RemoveCard();
                         this.slotArray[i].drawSlot();
                         this.inventory.drawInventory();
+                        this.pickupCardAudio.play();
                         break;
                     }
                 }
@@ -102,6 +120,7 @@ export class Level1 implements ILevel {
                         slot.InsertCard(card);
                         slot.drawSlot();
                         this.inventory.drawInventory();
+                        this.putBackCardAudio.play();
                         break;
                     }
                 }
@@ -126,15 +145,19 @@ export class Level1 implements ILevel {
 
                 this.SayDialogue(sentence.DialogueID).then(() => {
                     this.CheckNewCard(sentence);
-                });
-
-                if (sentence.Consequence) {
-                    Function(`"use strict";${sentence.Consequence}`)();
-                    // 檢查是否已經遊戲結束。
-                    if (Function("return TheEnd")()) {
-                        this.isTheEnd = true;
+                    if (sentence.Consequence) {
+                        Function(`"use strict";${sentence.Consequence}`)();
+                        // 檢查是否已經遊戲結束。
+                        if (Function("return EndState != null")()) {
+                            this.isTheEnd = true;
+                            if (Function("return EndState == 'Good'")()) {
+                                this.goodEndingAudio.play();
+                            } else if (Function("return EndState == 'Bad'")()) {
+                                this.badEndingAudio.play();
+                            }
+                        }
                     }
-                }
+                });
                 break;
             }
         });
@@ -160,7 +183,9 @@ export class Level1 implements ILevel {
 
     private async SayDialogue(dialogueID: number): Promise<void> {
         this.isSaying = true;
+        this.keybaordAudio.play();
         await this.typeWriter.say(this.dialogueTable.get(dialogueID));
+        this.keybaordAudio.pause();
         this.isSaying = false;
     }
 
