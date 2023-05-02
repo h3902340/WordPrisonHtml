@@ -33,6 +33,14 @@ export type DialogueDef = {
     Dialogue: string;
 };
 
+export type FallbackDef = {
+    CardID1: number;
+    CardID2: number;
+    CardID3: number;
+    Condition: string;
+    FallbackDialogueID: number;
+};
+
 export type Card = {
     rect: Rect;
     inventoryX: number;

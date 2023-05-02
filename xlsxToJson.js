@@ -2,12 +2,12 @@ const XLSX = require('xlsx');
 const fs = require('fs');
 const workbook = XLSX.readFile('./table/Level1.xlsx');
 workbook.SheetNames.forEach(function (sheet_name) {
+    if (sheet_name == "StateTable") return;
     var worksheet = workbook.Sheets[sheet_name];
     var headers = {};
     var data = [];
     for (z in worksheet) {
         if (z[0] === '!') continue;
-        if (z == "StateTable") continue;
         //parse out the column, row, and value
         var tt = 0;
         for (var i = 0; i < z.length; i++) {
