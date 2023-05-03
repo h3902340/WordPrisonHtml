@@ -6,7 +6,6 @@ const isProduction = process.env.NODE_ENV == "production";
 
 const config = {
   entry: "./src/index.ts",
-  devtool: 'source-map',
   output: {
     path: path.resolve(__dirname, "dist"),
   },
@@ -38,8 +37,10 @@ const config = {
 module.exports = () => {
   if (isProduction) {
     config.mode = "production";
+    config.devtool = false;
   } else {
     config.mode = "development";
+    config.devtool = 'source-map'
   }
   return config;
 };
