@@ -1,23 +1,19 @@
 import { card_height, card_width_unit, inventory_background_color } from "./GlobalSetting";
 import { Card, CardDef, Position, Rect } from "./TypeDefinition";
-import { clearRect, drawCardFromTopLeft, drawFilledRect } from "./Utility";
+import { clearRect, drawCard, drawFilledRect } from "./Utility";
 
 export class Inventory {
     public cardArray: Card[] = [];
-
-    private readonly originTail: Position = {x:110, y: 350};
+    private readonly rect: Rect;
+    private readonly padding: number;
     private currentTail: Position;
-    private readonly rect: Rect = {
-        x: 100,
-        y: 340,
-        w: 600,
-        h: 220
-    };
 
-    constructor(){
+    constructor(rect: Rect, padding: number) {
+        this.rect = rect;
+        this.padding = padding;
         this.currentTail = {
-            x: this.originTail.x,
-            y: this.originTail.y
+            x: rect.x + padding,
+            y: rect.y + padding
         };
     }
 
@@ -26,16 +22,16 @@ export class Inventory {
         drawFilledRect(this.rect, inventory_background_color)
         for (let i = 0; i < this.cardArray.length; i++) {
             if (this.cardArray[i].isSelected) continue;
-            drawCardFromTopLeft(this.cardArray[i]);
+            drawCard(this.cardArray[i]);
         }
     }
 
     public addCard(cardInfo: CardDef): void {
         let cardWidth = card_width_unit * cardInfo.Word.length;
-        let nextTailX = this.currentTail.x + 10 + cardWidth;
-        if (nextTailX > 700) {
-            this.currentTail.y += 10 + card_height;
-            this.currentTail.x = this.originTail.x;
+        let nextTailX = this.currentTail.x + this.padding + cardWidth;
+        if (nextTailX > this.rect.x + this.rect.w) {
+            this.currentTail.y += this.padding + card_height;
+            this.currentTail.x = this.rect.x + this.padding;
         }
         this.cardArray.push({
             rect: {
@@ -49,6 +45,6 @@ export class Inventory {
             cardInfo: cardInfo,
             isSelected: false
         });
-        this.currentTail.x += cardWidth + 10;
+        this.currentTail.x += cardWidth + this.padding;
     }
 }

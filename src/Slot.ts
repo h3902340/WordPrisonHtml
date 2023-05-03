@@ -1,12 +1,12 @@
 import { verb_color, noun_color } from "./GlobalSetting";
 import { Card, Rect, verb } from "./TypeDefinition";
-import { clearRect, drawCardFromCenter, drawHollowRect } from "./Utility";
+import { clearRect, drawCard, drawHollowRect } from "./Utility";
 
 export class Slot {
-    public rect: Rect;
-    public partOfSpeech: string;
-    private card: Card;
+    private readonly rect: Rect;
+    private readonly partOfSpeech: string;
     private readonly lineWidth = 6;
+    private card: Card;
 
     constructor(rect: Rect, partOfSpeech: string, card: Card) {
         this.rect = rect;
@@ -22,7 +22,7 @@ export class Slot {
             drawHollowRect(this.rect, noun_color, this.lineWidth);
         }
         if (this.card) {
-            drawCardFromCenter(this.card, this.rect.x + this.rect.w * .5, this.rect.y + this.rect.h * .5);
+            drawCard(this.card);
         }
     }
 
@@ -31,6 +31,10 @@ export class Slot {
         card.isSelected = true;
         card.rect.x = this.rect.x + (this.rect.w - card.rect.w) * .5;
         card.rect.y = this.rect.y;
+    }
+
+    public IsPartOfSpeechEqual(partOfSpeech: string): boolean {
+        return this.partOfSpeech == partOfSpeech;
     }
 
     public RemoveCard(): void {

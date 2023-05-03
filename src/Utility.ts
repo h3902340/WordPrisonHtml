@@ -1,4 +1,4 @@
-import { card_height, card_width_unit, dialogue_color, dialogue_font_size, noun_color, verb_color } from "./GlobalSetting";
+import { card_font, card_font_size, card_word_color, noun_color, verb_color } from "./GlobalSetting";
 import { Card, Position, Rect, verb } from "./TypeDefinition";
 import { ctx } from "./index";
 
@@ -10,30 +10,18 @@ export function clearRect(rect: Rect): void {
     ctx.clearRect(rect.x, rect.y, rect.w, rect.h);
 }
 
-export function drawCardFromTopLeft(card: Card): void {
+export function drawCard(card: Card): void {
     if (card.cardInfo.PartOfSpeech == verb) {
-        ctx.fillStyle = verb_color;
+        drawFilledRect(card.rect, verb_color);
     } else {
-        ctx.fillStyle = noun_color;
+        drawFilledRect(card.rect, noun_color);
     }
-    let cardWidth = card_width_unit * card.cardInfo.Word.length;
-    ctx.fillRect(card.rect.x, card.rect.y, cardWidth, card_height);
-    ctx.fillStyle = dialogue_color;
-    ctx.fillText(card.cardInfo.Word, card.rect.x + (cardWidth - dialogue_font_size * card.cardInfo.Word.length) * .5, card.rect.y + 35);
-}
 
-export function drawCardFromCenter(card: Card, centerX: number, centerY: number): void {
-    if (card.cardInfo.PartOfSpeech == verb) {
-        ctx.fillStyle = verb_color;
-    } else {
-        ctx.fillStyle = noun_color;
-    }
-    let cardWidth = 50 * card.cardInfo.Word.length;
-    let x = centerX - cardWidth * .5;
-    let y = centerY - card_height * .5;
-    ctx.fillRect(x, y, cardWidth, card_height);
-    ctx.fillStyle = dialogue_color;
-    ctx.fillText(card.cardInfo.Word, x + (cardWidth - dialogue_font_size * card.cardInfo.Word.length) * .5, y + 35);
+    drawText(card.cardInfo.Word, {
+        x: card.rect.x + (card.rect.w - card_font_size * card.cardInfo.Word.length) * .5,
+        // 根據這個公式，詞卡文字沒有剛好置中，需要微調
+        y: card.rect.y + (card.rect.h + card_font_size) * .5 - 5
+    }, card_word_color, card_font, card_font_size);
 }
 
 export function drawFilledRect(rect: Rect, color: string): void {
@@ -47,6 +35,12 @@ export function drawHollowRect(rect: Rect, color: string, lineWidth: number): vo
     ctx.lineWidth = lineWidth;
     ctx.strokeStyle = color;
     ctx.stroke();
+}
+
+export function drawText(text: string, startPosition: Position, color: string, font: string, size: number): void {
+    ctx.font = `${size}px ${font}`;
+    ctx.fillStyle = color;
+    ctx.fillText(text, startPosition.x, startPosition.y);
 }
 
 export function splitString(str: string, N: number): string[] {

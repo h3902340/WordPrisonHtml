@@ -8,6 +8,8 @@ import dialogueTableJson from './DialogueTable.json';
 import sentenceTableJson from './SentenceTable.json';
 import fallbackTableJson from './FallbackTable.json';
 import stateInitTableJson from './StateInitTable.json';
+import { applauseSound, createAudio, depthInRuinsMusic, endingBassSound, keyboardSound, pickUpSound, putBackSound } from "../AudioTool";
+import { card_height, card_width_unit, referenceScreenHeight, referenceScreenWidth } from "../GlobalSetting";
 
 export class Level1 implements ILevel {
     private readonly inventory: Inventory;
@@ -21,21 +23,43 @@ export class Level1 implements ILevel {
     private isSaying: boolean = false;
     private isTheEnd: boolean = false;
     private isMusicPlay: boolean = false;
-    private musicAudio = new Audio('audio/Depth in Ruins.wav');
-    private keybaordAudio = new Audio('audio/keyboard3.wav');
-    private goodEndingAudio = new Audio('audio/applause.wav');
-    private badEndingAudio = new Audio('audio/ending_bass.wav');
-    private pickupAudioArray: any[];
-    private putbackAudioArray: any[];
+    private musicAudio: HTMLAudioElement;
+    private keybaordAudio: HTMLAudioElement;
+    private goodEndingAudio: HTMLAudioElement;
+    private badEndingAudio: HTMLAudioElement;
+    private pickupAudioArray: HTMLAudioElement[];
+    private putbackAudioArray: HTMLAudioElement[];
 
     constructor() {
-        this.inventory = new Inventory();
+        let cardPadding: number = 10;
+        let slotPadding: number = 20;
+        let slotInventoryPadding: number = 10;
+        let typeWriterSlotPadding: number = 10;
+        let inventoryHeight: number = card_height * 3 + cardPadding * 4;
+        let inventoryBottomPadding: number = 20;
+        let slotWidth: number = card_width_unit * 3;
+        let slotHeight: number = card_height;
+        let slotStartY: number = referenceScreenHeight - inventoryBottomPadding - inventoryHeight - slotInventoryPadding - slotHeight;
+        let slotStartX: number = (referenceScreenWidth - slotWidth * 3 - slotPadding * 2) * .5;
+        let typeWriterExtend: number = -20;
+        let typeWriterTopPadding: number = 50;
+        let inventorySidePadding: number = 15;
+
         this.slotArray = [
-            new Slot({ x: 145, y: 270, w: 150, h: 50, }, noun, null),
-            new Slot({ x: 325, y: 270, w: 150, h: 50 }, verb, null),
-            new Slot({ x: 505, y: 270, w: 150, h: 50 }, noun, null)
+            new Slot({ x: slotStartX, y: slotStartY, w: slotWidth, h: slotHeight, }, noun, null),
+            new Slot({ x: slotStartX + slotWidth + slotPadding, y: slotStartY, w: slotWidth, h: slotHeight }, verb, null),
+            new Slot({ x: slotStartX + slotWidth * 2 + slotPadding * 2, y: slotStartY, w: slotWidth, h: slotHeight }, noun, null)
         ];
-        this.typeWriter = new TypeWriter({ x: 100, y: 70, w: 600, h: 190 });
+
+        this.inventory = new Inventory({
+            x: inventorySidePadding, y: slotStartY + slotHeight + slotInventoryPadding,
+            w: referenceScreenWidth - inventorySidePadding * 2, h: referenceScreenHeight - slotStartY - slotHeight - slotInventoryPadding - inventoryBottomPadding
+        }, 10);
+
+        this.typeWriter = new TypeWriter({
+            x: slotStartX - typeWriterExtend, y: typeWriterTopPadding,
+            w: referenceScreenWidth - slotStartX * 2 + typeWriterExtend * 2, h: slotStartY - typeWriterSlotPadding - typeWriterTopPadding
+        }, 5);
 
         let cardTableRaw: CardDef[] = cardTableJson as CardDef[];
 
@@ -58,16 +82,20 @@ export class Level1 implements ILevel {
                 this.stateInitTable[i]["StateInit"])();
         }
 
+        this.musicAudio = createAudio(depthInRuinsMusic);
+        this.keybaordAudio = createAudio(keyboardSound);
+        this.goodEndingAudio = createAudio(applauseSound);
+        this.badEndingAudio = createAudio(endingBassSound);
         this.pickupAudioArray = [
-            new Audio('audio/pick up.wav'),
-            new Audio('audio/pick up.wav'),
-            new Audio('audio/pick up.wav')
+            createAudio(pickUpSound),
+            createAudio(pickUpSound),
+            createAudio(pickUpSound)
         ];
 
         this.putbackAudioArray = [
-            new Audio('audio/put back.wav'),
-            new Audio('audio/put back.wav'),
-            new Audio('audio/put back.wav')
+            createAudio(putBackSound),
+            createAudio(putBackSound),
+            createAudio(putBackSound)
         ];
 
         this.musicAudio.loop = true;
@@ -127,7 +155,7 @@ export class Level1 implements ILevel {
             // 如果點選到的詞卡還沒有輸入，尋找一個空的slot輸入。
             for (let i = 0; i < this.slotArray.length; i++) {
                 let slot = this.slotArray[i];
-                if (slot.partOfSpeech == card.cardInfo.PartOfSpeech) {
+                if (slot.IsPartOfSpeechEqual(card.cardInfo.PartOfSpeech)) {
                     if (slot.IsCardEqual(null)) {
                         slot.InsertCard(card);
                         slot.drawSlot();
