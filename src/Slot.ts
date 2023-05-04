@@ -1,8 +1,9 @@
+import { Card } from "./Card";
 import { verb_color, noun_color } from "./GlobalSetting";
-import { Card, Rect, verb } from "./TypeDefinition";
-import { clearRect, drawCard, drawHollowRect } from "./Utility";
+import { IClickable, Position, Rect, verb } from "./TypeDefinition";
+import { clearRect, drawHollowRect, isInside } from "./Utility";
 
-export class Slot {
+export class Slot implements IClickable {
     private readonly rect: Rect;
     private readonly partOfSpeech: string;
     private readonly lineWidth = 6;
@@ -14,6 +15,14 @@ export class Slot {
         this.card = card;
     }
 
+    public CheckIfHit(mousePos: Position): boolean {
+        return isInside(mousePos, this.rect);
+    }
+
+    public CheckIfHitCard(_mousePos: Position): Card {
+        return this.card;
+    }
+
     public drawSlot(): void {
         clearRect(this.rect);
         if (this.partOfSpeech == verb) {
@@ -22,23 +31,26 @@ export class Slot {
             drawHollowRect(this.rect, noun_color, this.lineWidth);
         }
         if (this.card) {
-            drawCard(this.card);
+            this.card.drawCard();
         }
     }
 
-    public InsertCard(card: Card): void {
+    public AddCard(card: Card): void {
         this.card = card;
-        card.isSelected = true;
-        card.rect.x = this.rect.x + (this.rect.w - card.rect.w) * .5;
-        card.rect.y = this.rect.y;
+        card.PlaceAt({
+            x: this.rect.x + (this.rect.w - card.GetRect().w) * .5,
+            y: this.rect.y
+        });
     }
 
     public IsPartOfSpeechEqual(partOfSpeech: string): boolean {
         return this.partOfSpeech == partOfSpeech;
     }
 
-    public RemoveCard(): void {
+    public RemoveCard(): Card {
+        let card: Card = this.card;
         this.card = null;
+        return card;
     }
 
     public IsCardEqual(card: Card): boolean {
@@ -47,7 +59,7 @@ export class Slot {
 
     public GetCardID(): number {
         if (!this.card) return -1;
-        return this.card.cardInfo.ID;
+        return this.card.GetCardID();
     }
 
     public HasCard(): boolean {

@@ -1,7 +1,6 @@
 import { Inventory } from "../Inventory";
 import { TypeWriter } from "../TypeWriter";
-import { CardDef, DialogueDef, FallbackDef, ILevel, Position, SentenceDef, noun, verb } from "../TypeDefinition";
-import { isInside } from "../Utility";
+import { CardDef, DialogueDef, FallbackDef, IClickable, ILevel, Position, SentenceDef, noun, verb } from "../TypeDefinition";
 import { Slot } from "../Slot";
 import cardTableJson from './CardTable.json';
 import dialogueTableJson from './DialogueTable.json';
@@ -10,6 +9,8 @@ import fallbackTableJson from './FallbackTable.json';
 import stateInitTableJson from './StateInitTable.json';
 import { applauseSound, createAudio, depthInRuinsMusic, endingBassSound, keyboardSound, pickUpSound, putBackSound } from "../AudioTool";
 import { card_height, card_width_unit, referenceScreenHeight, referenceScreenWidth } from "../GlobalSetting";
+import { Card } from "../Card";
+import {HintButton} from '../HintButton'
 
 export class Level1 implements ILevel {
     private readonly inventory: Inventory;
@@ -22,13 +23,14 @@ export class Level1 implements ILevel {
     private readonly stateInitTable: { [k: string]: any }[];
     private isSaying: boolean = false;
     private isTheEnd: boolean = false;
-    private isMusicPlay: boolean = false;
     private musicAudio: HTMLAudioElement;
     private keybaordAudio: HTMLAudioElement;
     private goodEndingAudio: HTMLAudioElement;
     private badEndingAudio: HTMLAudioElement;
     private pickupAudioArray: HTMLAudioElement[];
     private putbackAudioArray: HTMLAudioElement[];
+    private clickableArray: IClickable[] = [];
+    private hintButton: HintButton;
 
     constructor() {
         let cardPadding: number = 10;
@@ -56,10 +58,24 @@ export class Level1 implements ILevel {
             w: referenceScreenWidth - inventorySidePadding * 2, h: referenceScreenHeight - slotStartY - slotHeight - slotInventoryPadding - inventoryBottomPadding
         }, 10);
 
+        this.clickableArray.push(this.inventory, this.slotArray[0], this.slotArray[1], this.slotArray[2]);
+
         this.typeWriter = new TypeWriter({
             x: slotStartX - typeWriterExtend, y: typeWriterTopPadding,
             w: referenceScreenWidth - slotStartX * 2 + typeWriterExtend * 2, h: slotStartY - typeWriterSlotPadding - typeWriterTopPadding
         }, 5);
+
+        let hintPadding: number = 10;
+        let hintWidth: number = 70;
+        this.hintButton = new HintButton({
+            x: referenceScreenWidth - hintPadding - hintWidth, 
+            y: hintPadding, 
+            w: hintWidth, 
+            h: hintWidth
+        });
+
+        this.clickableArray.push(this.hintButton);
+        this.hintButton.Draw();
 
         let cardTableRaw: CardDef[] = cardTableJson as CardDef[];
 
@@ -112,9 +128,9 @@ export class Level1 implements ILevel {
         }
         this.inventory.drawInventory();
         await this.typeWriter.say(this.dialogueTable.get(0));
-        this.inventory.addCard(this.cardTable.get(2));
-        this.inventory.addCard(this.cardTable.get(0));
-        this.inventory.addCard(this.cardTable.get(1));
+        this.inventory.AddCard(new Card(this.cardTable.get(2)));
+        this.inventory.AddCard(new Card(this.cardTable.get(0)));
+        this.inventory.AddCard(new Card(this.cardTable.get(1)));
         this.inventory.drawInventory();
     }
 
@@ -124,83 +140,96 @@ export class Level1 implements ILevel {
         // 說話時不接受點擊。
         if (this.isSaying) return;
 
-        // 檢查是否有播放BGM
-        if (!this.isMusicPlay) {
+        // 檢查是否有播放BGM。網頁如果按上一頁，再按下一頁，會導致音樂被暫停，但flag不會重設。所以這裡不能用flag來判斷，要用是否paused判斷。
+        if (this.musicAudio.paused) {
             this.musicAudio.play();
-            this.isMusicPlay = true;
         }
 
-        this.inventory.cardArray.forEach(card => {
-            if (!isInside(mousePos, card.rect)) return;
-            // 如果點選到的詞卡已經輸入，則把詞卡放回inventory。
-            if (card.isSelected) {
-                card.rect.x = card.inventoryX;
-                card.rect.y = card.inventoryY;
-                card.isSelected = false;
-                for (let i = 0; i < this.slotArray.length; i++) {
-                    if (this.slotArray[i].IsCardEqual(card)) {
-                        this.slotArray[i].RemoveCard();
-                        this.slotArray[i].drawSlot();
-                        this.inventory.drawInventory();
-                        this.pickupAudioArray[i].play();
-                        break;
-                    }
-                }
-                return;
-            }
+        let hitClickable: IClickable = null;
+        for(let i = 0; i < this.clickableArray.length; i++){
+            if(!this.clickableArray[i].CheckIfHit(mousePos)) continue;
+            hitClickable = this.clickableArray[i];
+            break;
+        }
 
-            // 如果輸入框已經滿了。就不再檢查造句。
-            if (this.isSlotFull()) return;
+        if(!hitClickable) return;
 
-            // 如果點選到的詞卡還沒有輸入，尋找一個空的slot輸入。
+        if(hitClickable instanceof HintButton){
+            this.ShowHint();
+            return;
+        }
+
+        // 如果點到slot，並且該slot有card，則把card退回至inventory
+        if(hitClickable instanceof Slot){
+            let card: Card = hitClickable.RemoveCard();
+            this.inventory.AddCard(card);
+            hitClickable.drawSlot();
+            this.inventory.drawInventory();
+            this.pickupAudioArray[this.slotArray.indexOf(hitClickable)].play();
+            return;
+        }
+
+        // 如果輸入框已經滿了。就不再檢查造句。
+        if (this.isSlotFull()) return;
+
+        //如果有點到inventory，則檢查是否有點到裡面的card
+        if(hitClickable == this.inventory){
+            let card: Card = this.inventory.CheckIfHitCard(mousePos);
+            // 沒有點到inventory，則return
+            if (!card) return;
+    
+            // 尋找一個空的slot輸入。
             for (let i = 0; i < this.slotArray.length; i++) {
                 let slot = this.slotArray[i];
-                if (slot.IsPartOfSpeechEqual(card.cardInfo.PartOfSpeech)) {
-                    if (slot.IsCardEqual(null)) {
-                        slot.InsertCard(card);
-                        slot.drawSlot();
-                        this.inventory.drawInventory();
-                        this.putbackAudioArray[i].play();
-                        break;
-                    }
-                }
-            }
-
-            if (!this.isSlotFull()) return;
-            // 如果三個輸入框都滿了。檢查造句。
-            // 先檢查是否滿足fallback條件
-            for (let i = 0; i < this.fallbackTable.length; i++) {
-                let fallback: FallbackDef = this.fallbackTable[i];
-                if (!this.isFallbackMatch(fallback)) continue;
-                if (!this.runLogicalExpression(fallback.Condition)) continue;
-
-                this.SayDialogue(fallback.FallbackDialogueID);
-                return;
-            }
-
-            for (let i = 0; i < this.sentenceTable.length; i++) {
-                let sentence: SentenceDef = this.sentenceTable[i];
-                if (!this.isSentenceMatch(sentence)) continue;
-                if (!this.runLogicalExpression(sentence.Condition)) continue;
-
-                this.SayDialogue(sentence.DialogueID).then(() => {
-                    this.CheckNewCard(sentence);
-                    if (sentence.Consequence) {
-                        Function(`"use strict";${sentence.Consequence}`)();
-                        // 檢查是否已經遊戲結束。
-                        if (Function("return EndState != null")()) {
-                            this.isTheEnd = true;
-                            if (Function("return EndState == 'Good'")()) {
-                                this.goodEndingAudio.play();
-                            } else if (Function("return EndState == 'Bad'")()) {
-                                this.badEndingAudio.play();
-                            }
-                        }
-                    }
-                });
+                if (!slot.IsPartOfSpeechEqual(card.GetPartOfSpeech())) continue;
+                if (!slot.IsCardEqual(null)) continue;
+                this.inventory.RemoveCard(card);
+                slot.AddCard(card);
+                slot.drawSlot();
+                this.inventory.drawInventory();
+                this.putbackAudioArray[i].play();
                 break;
             }
-        });
+        }
+
+        // 輸入完後檢查造句。如果三個輸入框還沒滿，則return
+        if (!this.isSlotFull()) return;
+        // 先檢查是否滿足fallback條件
+        for (let i = 0; i < this.fallbackTable.length; i++) {
+            let fallback: FallbackDef = this.fallbackTable[i];
+            if (!this.isFallbackMatch(fallback)) continue;
+            if (!this.runLogicalExpression(fallback.Condition)) continue;
+
+            this.SayDialogue(fallback.FallbackDialogueID);
+            return;
+        }
+
+        for (let i = 0; i < this.sentenceTable.length; i++) {
+            let sentence: SentenceDef = this.sentenceTable[i];
+            if (!this.isSentenceMatch(sentence)) continue;
+            if (!this.runLogicalExpression(sentence.Condition)) continue;
+
+            this.SayDialogue(sentence.DialogueID).then(() => {
+                this.CheckNewCard(sentence);
+                if (sentence.Consequence) {
+                    Function(`"use strict";${sentence.Consequence}`)();
+                    // 檢查是否已經遊戲結束。
+                    if (Function("return EndState != null")()) {
+                        this.isTheEnd = true;
+                        if (Function("return EndState == 'Good'")()) {
+                            this.goodEndingAudio.play();
+                        } else if (Function("return EndState == 'Bad'")()) {
+                            this.badEndingAudio.play();
+                        }
+                    }
+                }
+            });
+            break;
+        }
+    }
+
+    private ShowHint(): void{
+        this.typeWriter.say("這是提示!");
     }
 
     private isSlotFull(): boolean {
@@ -232,7 +261,8 @@ export class Level1 implements ILevel {
     private CheckNewCard(sentenceInfo: SentenceDef): void {
         if (sentenceInfo.NewCardID) {
             for (let i = 0; i < sentenceInfo.NewCardID.length; i++) {
-                this.inventory.addCard(this.cardTable.get(sentenceInfo.NewCardID[i]));
+                let cardInfo: CardDef = this.cardTable.get(sentenceInfo.NewCardID[i]);
+                this.inventory.AddCard(new Card(cardInfo));
             }
             this.inventory.drawInventory();
         }

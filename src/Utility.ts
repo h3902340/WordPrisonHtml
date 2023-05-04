@@ -1,5 +1,4 @@
-import { card_font, card_font_size, card_word_color, noun_color, verb_color } from "./GlobalSetting";
-import { Card, Position, Rect, verb } from "./TypeDefinition";
+import { Position, Rect } from "./TypeDefinition";
 import { ctx } from "./index";
 
 export async function sleep(ms: number): Promise<void> {
@@ -8,20 +7,6 @@ export async function sleep(ms: number): Promise<void> {
 
 export function clearRect(rect: Rect): void {
     ctx.clearRect(rect.x, rect.y, rect.w, rect.h);
-}
-
-export function drawCard(card: Card): void {
-    if (card.cardInfo.PartOfSpeech == verb) {
-        drawFilledRect(card.rect, verb_color);
-    } else {
-        drawFilledRect(card.rect, noun_color);
-    }
-
-    drawText(card.cardInfo.Word, {
-        x: card.rect.x + (card.rect.w - card_font_size * card.cardInfo.Word.length) * .5,
-        // 根據這個公式，詞卡文字沒有剛好置中，需要微調
-        y: card.rect.y + (card.rect.h + card_font_size) * .5 - 5
-    }, card_word_color, card_font, card_font_size);
 }
 
 export function drawFilledRect(rect: Rect, color: string): void {

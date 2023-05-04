@@ -3,6 +3,10 @@ export interface ILevel {
     onCanvasClick(mousePos: Position): void;
 }
 
+export interface IClickable {
+    CheckIfHit(mousePos: Position): boolean;
+}
+
 export type SentenceKey = {
     CardID1: number;
     CardID2: number;
@@ -40,14 +44,6 @@ export type FallbackDef = {
     Condition: string;
     FallbackDialogueID: number;
 };
-
-export type Card = {
-    rect: Rect;
-    inventoryX: number;
-    inventoryY: number;
-    cardInfo: CardDef;
-    isSelected: boolean;
-}
 
 export type Rect = {
     x: number;
