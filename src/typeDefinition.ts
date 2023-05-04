@@ -45,6 +45,19 @@ export type FallbackDef = {
     FallbackDialogueID: number;
 };
 
+export type HintDef = {
+    HintID: number;
+    Hint: string;
+    Condition: string;
+    NextHintID: number[];
+};
+
+export type HintValue = {
+    Hint: string;
+    Condition: string;
+    NextHintID: number[];
+}
+
 export type Rect = {
     x: number;
     y: number;

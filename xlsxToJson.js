@@ -27,7 +27,7 @@ workbook.SheetNames.forEach(function (sheet_name) {
         }
 
         if (!data[row]) data[row] = {};
-        if (headers[col] == "NewCardID") {
+        if (headers[col] == "NewCardID" || headers[col] == "NextHintID") {
             data[row][headers[col]] = JSON.parse(value);
         } else if (headers[col] == "Comment") {
             // omit comment

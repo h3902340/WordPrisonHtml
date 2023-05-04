@@ -1,16 +1,17 @@
 import { Inventory } from "../Inventory";
 import { TypeWriter } from "../TypeWriter";
-import { CardDef, DialogueDef, FallbackDef, IClickable, ILevel, Position, SentenceDef, noun, verb } from "../TypeDefinition";
+import { CardDef, DialogueDef, FallbackDef, HintDef, HintValue, IClickable, ILevel, Position, SentenceDef, noun, verb } from "../TypeDefinition";
 import { Slot } from "../Slot";
 import cardTableJson from './CardTable.json';
 import dialogueTableJson from './DialogueTable.json';
 import sentenceTableJson from './SentenceTable.json';
 import fallbackTableJson from './FallbackTable.json';
 import stateInitTableJson from './StateInitTable.json';
+import hintTableJson from './HintTable.json';
 import { applauseSound, createAudio, depthInRuinsMusic, endingBassSound, keyboardSound, pickUpSound, putBackSound } from "../AudioTool";
 import { card_height, card_width_unit, referenceScreenHeight, referenceScreenWidth } from "../GlobalSetting";
 import { Card } from "../Card";
-import {HintButton} from '../HintButton'
+import { HintButton } from '../HintButton'
 
 export class Level1 implements ILevel {
     private readonly inventory: Inventory;
@@ -19,6 +20,7 @@ export class Level1 implements ILevel {
     private readonly cardTable = new Map<number, CardDef>();
     private readonly sentenceTable: SentenceDef[];
     private readonly fallbackTable: FallbackDef[];
+    private readonly hintTable: Map<number, HintValue>;
     private readonly dialogueTable = new Map<number, string>();
     private readonly stateInitTable: { [k: string]: any }[];
     private isSaying: boolean = false;
@@ -31,6 +33,8 @@ export class Level1 implements ILevel {
     private putbackAudioArray: HTMLAudioElement[];
     private clickableArray: IClickable[] = [];
     private hintButton: HintButton;
+    private currentHintArray: HintValue[] = [];
+    private currentHintIndex: number = 0;
 
     constructor() {
         let cardPadding: number = 10;
@@ -68,9 +72,9 @@ export class Level1 implements ILevel {
         let hintPadding: number = 10;
         let hintWidth: number = 70;
         this.hintButton = new HintButton({
-            x: referenceScreenWidth - hintPadding - hintWidth, 
-            y: hintPadding, 
-            w: hintWidth, 
+            x: referenceScreenWidth - hintPadding - hintWidth,
+            y: hintPadding,
+            w: hintWidth,
             h: hintWidth
         });
 
@@ -85,6 +89,17 @@ export class Level1 implements ILevel {
 
         this.sentenceTable = sentenceTableJson as SentenceDef[];
         this.fallbackTable = fallbackTableJson as FallbackDef[];
+
+        this.hintTable = new Map<number, HintValue>();
+        let hintTableRaw: HintDef[] = hintTableJson as HintDef[];
+        for (let i = 0; i < hintTableRaw.length; i++) {
+            this.hintTable.set(hintTableRaw[i].HintID, {
+                Hint: hintTableRaw[i].Hint,
+                Condition: hintTableJson[i].Condition,
+                NextHintID: hintTableRaw[i].NextHintID
+            });
+        }
+        this.currentHintArray.push(this.hintTable.get(0));
 
         let dialogueTableRaw: DialogueDef[] = dialogueTableJson as DialogueDef[];
         dialogueTableRaw.forEach(dialogue => {
@@ -127,7 +142,7 @@ export class Level1 implements ILevel {
             this.slotArray[i].drawSlot();
         }
         this.inventory.drawInventory();
-        await this.typeWriter.say(this.dialogueTable.get(0));
+        await this.SayDialogueWithoutSound(this.dialogueTable.get(0));
         this.inventory.AddCard(new Card(this.cardTable.get(2)));
         this.inventory.AddCard(new Card(this.cardTable.get(0)));
         this.inventory.AddCard(new Card(this.cardTable.get(1)));
@@ -146,21 +161,22 @@ export class Level1 implements ILevel {
         }
 
         let hitClickable: IClickable = null;
-        for(let i = 0; i < this.clickableArray.length; i++){
-            if(!this.clickableArray[i].CheckIfHit(mousePos)) continue;
+        for (let i = 0; i < this.clickableArray.length; i++) {
+            if (!this.clickableArray[i].CheckIfHit(mousePos)) continue;
             hitClickable = this.clickableArray[i];
             break;
         }
 
-        if(!hitClickable) return;
+        if (!hitClickable) return;
 
-        if(hitClickable instanceof HintButton){
+        if (hitClickable instanceof HintButton) {
             this.ShowHint();
             return;
         }
 
         // 如果點到slot，並且該slot有card，則把card退回至inventory
-        if(hitClickable instanceof Slot){
+        if (hitClickable instanceof Slot) {
+            if (!hitClickable.HasCard()) return;
             let card: Card = hitClickable.RemoveCard();
             this.inventory.AddCard(card);
             hitClickable.drawSlot();
@@ -173,11 +189,11 @@ export class Level1 implements ILevel {
         if (this.isSlotFull()) return;
 
         //如果有點到inventory，則檢查是否有點到裡面的card
-        if(hitClickable == this.inventory){
+        if (hitClickable == this.inventory) {
             let card: Card = this.inventory.CheckIfHitCard(mousePos);
             // 沒有點到inventory，則return
             if (!card) return;
-    
+
             // 尋找一個空的slot輸入。
             for (let i = 0; i < this.slotArray.length; i++) {
                 let slot = this.slotArray[i];
@@ -200,7 +216,7 @@ export class Level1 implements ILevel {
             if (!this.isFallbackMatch(fallback)) continue;
             if (!this.runLogicalExpression(fallback.Condition)) continue;
 
-            this.SayDialogue(fallback.FallbackDialogueID);
+            this.SayDialogue(this.dialogueTable.get(fallback.FallbackDialogueID));
             return;
         }
 
@@ -209,27 +225,54 @@ export class Level1 implements ILevel {
             if (!this.isSentenceMatch(sentence)) continue;
             if (!this.runLogicalExpression(sentence.Condition)) continue;
 
-            this.SayDialogue(sentence.DialogueID).then(() => {
+            this.SayDialogue(this.dialogueTable.get(sentence.DialogueID)).then(() => {
                 this.CheckNewCard(sentence);
-                if (sentence.Consequence) {
-                    Function(`"use strict";${sentence.Consequence}`)();
-                    // 檢查是否已經遊戲結束。
-                    if (Function("return EndState != null")()) {
-                        this.isTheEnd = true;
-                        if (Function("return EndState == 'Good'")()) {
-                            this.goodEndingAudio.play();
-                        } else if (Function("return EndState == 'Bad'")()) {
-                            this.badEndingAudio.play();
+                if (!sentence.Consequence) return;
+
+                Function(`"use strict";${sentence.Consequence}`)();
+                // 檢查是否已經遊戲結束。
+                if (Function("return EndState != null")()) {
+                    this.isTheEnd = true;
+                    if (Function("return EndState == 'Good'")()) {
+                        this.goodEndingAudio.play();
+                    } else if (Function("return EndState == 'Bad'")()) {
+                        this.badEndingAudio.play();
+                    }
+                }
+
+                // 更新提示
+                let removedHintArray: HintValue[];
+                do{
+                    removedHintArray = [];
+                    for (let i = this.currentHintArray.length - 1; i >= 0; i--) {
+                        if (this.runLogicalExpression(this.currentHintArray[i].Condition)) continue;
+                        removedHintArray = removedHintArray.concat(this.currentHintArray.splice(i, 1));
+                    }
+    
+                    for (let i = 0; i < removedHintArray.length; i++) {
+                        if (!removedHintArray[i].NextHintID) continue;
+                        for (let j = 0; j < removedHintArray[i].NextHintID.length; j++) {
+                            let hint: HintValue = this.hintTable.get(removedHintArray[i].NextHintID[j]);
+                            if (this.currentHintArray.indexOf(hint) != -1) continue;
+                            this.currentHintArray.push(hint);
                         }
                     }
                 }
+                while(removedHintArray.length != 0)
+                this.currentHintIndex = 0;
             });
             break;
         }
     }
 
-    private ShowHint(): void{
-        this.typeWriter.say("這是提示!");
+    private ShowHint(): void {
+        if (this.currentHintArray.length == 0) return;
+        this.SayDialogue(`提示：${this.currentHintArray[this.currentHintIndex].Hint}`);
+        if (this.currentHintIndex >= this.currentHintArray.length - 1) {
+            this.currentHintIndex = 0;
+        } else {
+            this.currentHintIndex++;
+        }
     }
 
     private isSlotFull(): boolean {
@@ -250,11 +293,17 @@ export class Level1 implements ILevel {
             (!sentence.CardID3 || sentence.CardID3 == this.slotArray[2].GetCardID());
     }
 
-    private async SayDialogue(dialogueID: number): Promise<void> {
+    private async SayDialogue(dialogue: string): Promise<void> {
         this.isSaying = true;
         this.keybaordAudio.play();
-        await this.typeWriter.say(this.dialogueTable.get(dialogueID));
+        await this.typeWriter.say(dialogue);
         this.keybaordAudio.pause();
+        this.isSaying = false;
+    }
+
+    private async SayDialogueWithoutSound(dialogue: string): Promise<void> {
+        this.isSaying = true;
+        await this.typeWriter.say(dialogue);
         this.isSaying = false;
     }
 
