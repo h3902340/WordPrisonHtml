@@ -3,18 +3,22 @@
 
 <head>
     <meta charset="utf-8" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; media-src 'self'; base-uri 'self'; form-action 'none'; object-src 'none'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'; media-src 'self'; base-uri 'self'; form-action 'none'; object-src 'none'" />
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta name="referrer" content="no-referrer" />
     <title>文字脫出網頁版</title>
-    <link rel="stylesheet" href="style.css" />
+    <style>
+        html, body, #mainCanvas { background-color: #000000; }
+        html, body { margin: 0; }
+    </style>
+    <link rel="stylesheet" href="style.css?v=1.2.1" />
 </head>
 
-    <body>
+<body>
     <div id="wrapper">
-        <Canvas id="mainCanvas"></Canvas>
+        <canvas id="mainCanvas" width="800" height="600"></canvas>
     </div>
-    <script src="dist/main.js"></script>
+    <script src="dist/main.js?v=1.2.1"></script>
     <footer id="gameRuleFooter">
         <p>遊戲規則：</p>
         <p>1. 點擊詞卡以輸入字詞造句，遊戲內的角色就會有所行動，有時候還可能獲得新詞卡。</p>
@@ -23,7 +27,7 @@
         <p>※此為文字獄原作者製作的網頁遊戲。</p>
         <p>※此為測試版，目前只有一關，沒有存檔功能。遊戲結束即可關閉網頁。</p>
         <p>※初次點擊詞卡就會開始播放音效，注意音量！</p>
-        <p>版本：1.2.0</p>
+        <p>版本：1.2.1</p>
     </footer>
 </body>
 

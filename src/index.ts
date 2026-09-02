@@ -4,7 +4,7 @@ import { ILevel, Position } from "./TypeDefinition";
 import { getMousePos } from "./Utility";
 
 let canvas: HTMLCanvasElement = document.getElementById("mainCanvas") as HTMLCanvasElement;
-export let ctx: CanvasRenderingContext2D = canvas.getContext("2d");
+export let ctx: CanvasRenderingContext2D = canvas.getContext("2d", { alpha: false });
 
 canvas.width = referenceScreenWidth;
 canvas.height = referenceScreenHeight;
