@@ -8,6 +8,8 @@ const config = {
   entry: "./src/index.ts",
   output: {
     path: path.resolve(__dirname, "dist"),
+    filename: "main.js",
+    clean: true,
   },
   plugins: [
     // Add your plugins here

@@ -8,4 +8,6 @@ cd至根目錄，然後輸入npm run build，即可將TypeScript（簡稱ts）�
 
 「npm run build:dev」為development build，有包含source map。
 
-table資料夾內的xlsx檔是關卡企劃。在專案根目錄輸入「node ./xlsxJson.js」即可將xlsx轉成json。這部分也是用js寫的，借助node.js runtime。
+table資料夾內的xlsx檔是關卡企劃。在專案根目錄輸入「npm run tables」即可將xlsx轉成json。轉換腳本只使用Node內建模組，不再依賴有漏洞的`xlsx`套件。
+
+遊戲邏輯條件與結果寫在json裡，會由`src/GameState.ts`的白名單解譯器執行，不再使用`new Function` / `eval`。

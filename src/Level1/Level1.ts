@@ -12,6 +12,7 @@ import { applauseSound, createAudio, depthInRuinsMusic, endingBassSound, keyboar
 import { card_height, card_width_unit, referenceScreenHeight, referenceScreenWidth } from "../GlobalSetting";
 import { Card } from "../Card";
 import { HintButton } from '../HintButton'
+import { GameState } from "../GameState";
 
 export class Level1 implements ILevel {
     private readonly inventory: Inventory;
@@ -35,6 +36,7 @@ export class Level1 implements ILevel {
     private hintButton: HintButton;
     private currentHintArray: HintValue[] = [];
     private currentHintIndex: number = 0;
+    private readonly gameState = new GameState();
 
     constructor() {
         let cardPadding: number = 10;
@@ -109,9 +111,13 @@ export class Level1 implements ILevel {
         this.stateInitTable = stateInitTableJson as { [k: string]: any }[];
 
         for (let i = 0; i < this.stateInitTable.length; i++) {
-            new Function(this.stateInitTable[i]["StateName"] + "=" +
-                this.stateInitTable[i]["StateInit"])();
+            this.gameState.init(
+                this.stateInitTable[i]["StateName"],
+                this.stateInitTable[i]["StateInit"]
+            );
         }
+
+        this.validateTableExpressions();
 
         this.musicAudio = createAudio(depthInRuinsMusic);
         this.keybaordAudio = createAudio(keyboardSound);
@@ -229,13 +235,14 @@ export class Level1 implements ILevel {
                 this.CheckNewCard(sentence);
                 if (!sentence.Consequence) return;
 
-                Function(`"use strict";${sentence.Consequence}`)();
+                this.gameState.apply(sentence.Consequence);
                 // 檢查是否已經遊戲結束。
-                if (Function("return EndState != null")()) {
+                const endState = this.gameState.get("EndState");
+                if (endState != null) {
                     this.isTheEnd = true;
-                    if (Function("return EndState == 'Good'")()) {
+                    if (endState == "Good") {
                         this.goodEndingAudio.play();
-                    } else if (Function("return EndState == 'Bad'")()) {
+                    } else if (endState == "Bad") {
                         this.badEndingAudio.play();
                     }
                 }
@@ -318,7 +325,19 @@ export class Level1 implements ILevel {
     }
 
     private runLogicalExpression(str: string): boolean {
-        if (!str) return true;
-        return new Function("return " + str)();
+        return this.gameState.evaluate(str);
+    }
+
+    private validateTableExpressions(): void {
+        for (let i = 0; i < this.sentenceTable.length; i++) {
+            this.gameState.validateExpression(this.sentenceTable[i].Condition);
+            this.gameState.validateAssignments(this.sentenceTable[i].Consequence);
+        }
+        for (let i = 0; i < this.fallbackTable.length; i++) {
+            this.gameState.validateExpression(this.fallbackTable[i].Condition);
+        }
+        this.hintTable.forEach((hint) => {
+            this.gameState.validateExpression(hint.Condition);
+        });
     }
 }
