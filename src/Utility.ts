@@ -1,3 +1,4 @@
+import { canvas_background_color } from "./GlobalSetting";
 import { Position, Rect } from "./TypeDefinition";
 import { ctx } from "./index";
 
@@ -6,7 +7,8 @@ export async function sleep(ms: number): Promise<void> {
 }
 
 export function clearRect(rect: Rect): void {
-    ctx.clearRect(rect.x, rect.y, rect.w, rect.h);
+    ctx.fillStyle = canvas_background_color;
+    ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
 }
 
 export function drawFilledRect(rect: Rect, color: string): void {

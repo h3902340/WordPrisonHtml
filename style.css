@@ -1,3 +1,13 @@
+html,
+body {
+    background-color: #000000;
+    margin: 0;
+}
+
+#mainCanvas {
+    background-color: #000000;
+}
+
 #wrapper {
     display: flex;
     justify-content: center;

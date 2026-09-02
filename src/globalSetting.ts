@@ -2,6 +2,8 @@
 export const noun_color = "#FC9B45";
 // 動詞顏色
 export const verb_color = "#51A6FF";
+// 遊戲畫面背景
+export const canvas_background_color = "#000000";
 // 卡片欄的背景
 export const inventory_background_color = "#BEBEBE";
 // 詞卡的寬度單位。詞卡有n個字，則詞卡寬度為n * card_width_unit
